@@ -35,7 +35,7 @@ top_selling_category = df['Product Category'].value_counts().idxmax()
 # Create a bar chart for total revenue by product category
 category_revenue = df.groupby('Product Category')['Revenue'].sum()
 plt.figure(figsize=(10, 6))
-category_revenue.plot(kind='bar')
+category_revenue.plot(kind='bar', color='skyblue')  # Set the color to orange
 plt.xlabel('Product Category')
 plt.ylabel('Total Revenue')
 plt.title('Total Revenue by Product Category')
@@ -44,6 +44,20 @@ plt.xticks(rotation=45)
 # Save the chart as an image file
 plt.savefig('revenue_by_category.png')
 
+# Create a bar chart for monthly sales
+df['Date'] = pd.to_datetime(df['Date'])  # Convert 'Date' column to datetime
+df['Month'] = df['Date'].dt.to_period('M')  # Extract month and year
+monthly_sales = df.groupby('Month')['Revenue'].sum()
+plt.figure(figsize=(10, 6))
+monthly_sales.plot(kind='bar', color='orange')  # Set the color to orange
+plt.xlabel('Month')
+plt.ylabel('Total Sales')
+plt.title('Monthly Sales')
+plt.xticks(rotation=45)
+
+# Save the chart as an image file
+plt.savefig('monthly_sales.png')
+
 # Step 5: Save key metrics to a text file
 
 with open('key_metrics.txt', 'w') as file:
@@ -51,7 +65,7 @@ with open('key_metrics.txt', 'w') as file:
     file.write(f"Average Revenue per Order: ${average_revenue_per_order:.2f}\n")
     file.write(f"Top Selling Product Category: {top_selling_category}\n")
 
-# Display the chart (optional)
+# Display the charts (optional)
 plt.show()
 
 print("Data analysis and visualization completed.")
