@@ -1,71 +1,86 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Step 1: Load the data from the CSV file
-try:
-    df = pd.read_csv('sales_data.csv', sep='#')
-except FileNotFoundError:
-    print("Error: The 'sales_data.csv' file was not found. Please provide the correct file path.")
-    exit()
+def load_data(file_path):
+    return pd.read_csv(file_path, sep='#')
 
-# Step 2: Data Cleaning
-
-# Check for missing values
-if df.isnull().values.any():
-    # Handle missing values (e.g., drop rows with missing data)
+def clean_data(df):
     df.dropna(inplace=True)
-    print("Missing values were removed.")
+    df['Revenue'] = pd.to_numeric(df['Revenue'], errors='coerce')
+    return df
 
-# Data type conversion (if needed)
-# In this example, we assume the data types are already correct.
+def calculate_metrics(df):
+    total_revenue = df['Revenue'].sum()
+    average_revenue_per_order = df['Revenue'].mean()
+    top_product_category = df['Product Category'].value_counts().idxmax()
+    return total_revenue, average_revenue_per_order, top_product_category
 
-# Step 3: Calculate Key Metrics
+def visualize_discount_status(df):
+    plt.figure(figsize=(8, 6))
+    discount_counts = df['Discount Rate'].apply(lambda x: 'With Discount' if x > 0 else 'Without Discount').value_counts()
+    discount_counts.plot(kind='bar', color=['skyblue', 'salmon'])
+    plt.title('Products with and Without Discounts')
+    plt.xlabel('Discount Status')
+    plt.ylabel('Quantity')
+    plt.savefig('discount_status_bar_chart.png')
+    plt.close()
 
-# Calculate total revenue
-total_revenue = df['Revenue'].sum()
+def visualize_product_category(df):
+    plt.figure(figsize=(8, 8))
+    category_counts = df['Product Category'].value_counts()
+    plt.pie(category_counts, labels=category_counts.index, autopct='%1.1f%%')
+    plt.title('Product Category Distribution')
+    plt.savefig('product_category_pie_chart.png')
+    plt.close()
 
-# Calculate average revenue per order
-average_revenue_per_order = total_revenue / len(df)
+def visualize_revenue_by_category(df):
+    plt.figure(figsize=(10, 6))
+    colors = plt.cm.Paired(range(len(df['Product Category'].unique())))
+    revenue_by_category = df.groupby('Product Category')['Revenue'].sum()
+    revenue_by_category.plot(kind='bar', color=colors)
+    plt.title('Revenue by Product Category')
+    plt.xlabel('Product Category')
+    plt.ylabel('Total Revenue')
+    plt.savefig('revenue_by_product_category_bar_chart.png')
+    plt.close()
 
-# Find the top-selling product category
-top_selling_category = df['Product Category'].value_counts().idxmax()
+def visualize_top_selling_products(df):
+    plt.figure(figsize=(10, 6))
+    top_products = df.groupby('Product Category')['Quantity Sold'].sum().sort_values(ascending=False).head(3)
+    top_products.plot(kind='bar', color='skyblue')
+    plt.title('Top 3 Selling Products')
+    plt.xlabel('Product Category')
+    plt.ylabel('Total Quantity Sold')
+    plt.savefig('top_selling_products_bar_chart.png')
+    plt.close()
 
-# Step 4: Create Visualizations
+def visualize_monthly_revenue(df):
+    plt.figure(figsize=(12, 6))
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Month'] = df['Date'].dt.strftime('%Y-%m')
+    monthly_revenue = df.groupby('Month')['Revenue'].sum()
+    monthly_revenue.plot(kind='bar', color='lightcoral')
+    plt.title('Monthly Revenue')
+    plt.xlabel('Month')
+    plt.ylabel('Total Revenue')
+    plt.savefig('monthly_revenue_bar_chart.png')
+    plt.close()
 
-# Create a bar chart for total revenue by product category
-category_revenue = df.groupby('Product Category')['Revenue'].sum()
-plt.figure(figsize=(10, 6))
-category_revenue.plot(kind='bar', color='skyblue')  # Set the color to orange
-plt.xlabel('Product Category')
-plt.ylabel('Total Revenue')
-plt.title('Total Revenue by Product Category')
-plt.xticks(rotation=45)
+def main():
+    data_file = 'sales_data.csv'
+    df = load_data(data_file)
+    df = clean_data(df)
+    total_revenue, average_revenue_per_order, top_product_category = calculate_metrics(df)
+    
+    visualize_discount_status(df)
+    visualize_product_category(df)
+    visualize_revenue_by_category(df)
+    visualize_top_selling_products(df)
+    visualize_monthly_revenue(df)
+    
+    print("Total Revenue:", total_revenue)
+    print("Average Revenue per Order:", average_revenue_per_order)
+    print("Top Selling Product Category:", top_product_category)
 
-# Save the chart as an image file
-plt.savefig('revenue_by_category.png')
-
-# Create a bar chart for monthly sales
-df['Date'] = pd.to_datetime(df['Date'])  # Convert 'Date' column to datetime
-df['Month'] = df['Date'].dt.to_period('M')  # Extract month and year
-monthly_sales = df.groupby('Month')['Revenue'].sum()
-plt.figure(figsize=(10, 6))
-monthly_sales.plot(kind='bar', color='orange')  # Set the color to orange
-plt.xlabel('Month')
-plt.ylabel('Total Sales')
-plt.title('Monthly Sales')
-plt.xticks(rotation=45)
-
-# Save the chart as an image file
-plt.savefig('monthly_sales.png')
-
-# Step 5: Save key metrics to a text file
-
-with open('key_metrics.txt', 'w') as file:
-    file.write(f"Total Revenue: ${total_revenue:.2f}\n")
-    file.write(f"Average Revenue per Order: ${average_revenue_per_order:.2f}\n")
-    file.write(f"Top Selling Product Category: {top_selling_category}\n")
-
-# Display the charts (optional)
-plt.show()
-
-print("Data analysis and visualization completed.")
+if __name__ == "__main__":
+    main()
